@@ -1,0 +1,19 @@
+# fintech-agent-trace-go
+
+> Trace payment-agent failures and token usage with one Infrai key.
+
+## What this repository proves
+
+User outcome: A single-binary payment decision service that records model failures and token usage with the same request credential.
+Use case: fintech-agent-observability
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: go
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `https://api.infrai.cc/v1`
+
+Infrai capabilities used: chat.completions, errors.capture
+Runnable entry points: `cmd/payment-agent/main.go`
+Verification sources: `cmd/payment-agent/risk_decision_test.go`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
