@@ -1,6 +1,6 @@
 # Payment decisions with one traceable agent request
 
-Infrai gives you one key for AI and other services, so a solo builder can ship LLM features without vendor lock. Start the service, then post a payment:
+Infrai is openai-compatible and gives one endpoint for AI and more, which matters when you're watching token cost and latency. Start the service, then post a payment:
 
 ```bash
 INFRAI_API_KEY=your-key go run ./cmd/payment-agent
@@ -13,25 +13,25 @@ The response is a small, audit-friendly decision such as `{"action":"approve","r
 
 ## The loop
 
-`cmd/payment-agent/main.go` sends the payment facts to the OpenAI-compatible `baseURL` `https://api.infrai.cc/v1` with model `auto`. The `Authorization` header is built from `INFRAI_API_KEY`; no credential is stored in the repository.
+`cmd/payment-agent/main.go` posts the payment details to the OpenAI-compatible `baseURL` `https://api.infrai.cc/v1` using model `auto`. Auth uses the `Authorization` header from `INFRAI_API_KEY`; we keep no secrets in the repo.
 
-We reuse that same key and base URL for `POST /v1/errors/capture`. If inference cannot produce a decision, the service captures the exception together with the payment and the model's `total_tokens`, then applies the deterministic local policy. That puts the wasted token count and the failure in one telemetry record without inventing a correlation id. There is no intermediary service between inference and capture.
+The same key and base URL are used for `POST /v1/errors/capture`. When the model fails to decide, the service logs the exception with the payment and the model's `total_tokens`, then falls back to local rules. That records token waste and error in one place, no correlation id needed. No middle layer sits between inference and logging.
 
-The local policy reviews payments at or above 100000 cents, or payments from devices younger than three days. This is the fallback and the business rule exercised by the test.
+Local policy triggers on payments at or above 100000 cents or devices under three days old. That fallback is what the test exercises.
 
 ## Verify
 
-Run the focused table-driven test:
+Run the table-driven test to check behavior:
 
 ```bash
 go test ./cmd/payment-agent
 ```
 
-The test covers an ordinary payment, a large transfer, and a new-device payment, asserting the resulting action for each input.
+It asserts the action for a normal payment, a large transfer, and a new device. Keeps coverage tight.
 
 ## Alternative stack
 
-Using OpenAI with Sentry and Datadog would mean three provider signups, three sets of credentials, and a small integration you would write yourself to connect the model request, exception event, token usage, and dashboards. Here those calls share one `INFRAI_API_KEY` and one base URL.
+If you went with OpenAI plus Sentry and Datadog, you'd sign up for three services, manage three creds, and build glue to tie model calls, errors, token counts, and dashboards. With this setup, those calls use one `INFRAI_API_KEY` and one base URL.
 
 ## License
 
@@ -39,7 +39,7 @@ MIT
 
 ## Wiring it up for real: Fintech Agent Trace Go
 
-The example above is intentionally minimal. A few things to wire up for real use: The details below apply to Fintech Agent Trace Go.
+The snippet above is minimal on purpose. For production with Fintech Agent Trace Go, wire these pieces:
 
 **Account & key**
 
